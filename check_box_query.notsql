@@ -1,0 +1,93 @@
+------------------------filter by price
+"AND RestaurantsPriceRange2 =1"
+"OR RestaurantsPriceRange2 =1"
+
+
+------------------------filter by attribute
+--accept credit cards
+"and attribute.BusinessAcceptsCreditCards = 'True'"
+--take reservations
+"and attribute.RestaurantsReservations = 'True'"
+--wheelchair accessible
+"and attribute.WheelchairAccessible = 'True'"
+--outdoor seating
+"and attribute.OutdoorSeating = 'True'"
+--good for kids
+"and attribute.GoodForKids = 'True'"
+--good for groups
+"and attribute.RestaurantsGoodForGroups = 'True'"
+--delivery
+"and attribute.RestaurantsDelivery = 'True'"
+--take out
+"and attribute.RestaurantsTakeOut = 'True'"
+--free wifi
+"and attribute.wifi = 'True'"
+--bike parking
+"and attribute.BikeParking = 'True'"
+
+
+--------------------------filter by meal
+--breakfast
+"and attribute.breakfast = 'True'"
+--brunch
+"and attribute.brunch = 'True'"
+--lunch
+"and attribute.lunch = 'True'"
+--dinner
+"and attribute.dinner = 'True'"
+--dessert
+"and attribute.dessert = 'True'"
+--late night
+"and attribute.latenight = 'True'"
+
+
+-----------------------sort results by
+--name
+default
+--highest rated
+"ORDER BY business.stars"
+--most reviewed
+"ORDER BY business.numreviews"
+--best review rating
+"ORDER BY business.avgrating"
+--most checkins
+"ORDER BY business.numCheckins"
+--nearest
+"ORDER BY (point(business.longitude,business.latitude)<@>point(yelpuser.longitude,yelpuser.latitude))"
+
+SELECT sum(numCheck) FROM checkin WHERE day = 'Monday' AND busID =''
+SELECT sum(numCheck) FROM checkin WHERE day = 'Tuesday' AND busID =''
+SELECT sum(numCheck) FROM checkin WHERE day = 'Wednesday' AND busID =''
+SELECT sum(numCheck) FROM checkin WHERE day = 'Thursday' AND busID =''
+SELECT sum(numCheck) FROM checkin WHERE day = 'Friday' AND busID =''
+SELECT sum(numCheck) FROM checkin WHERE day = 'Saturday' AND busID =''
+SELECT sum(numCheck) FROM checkin WHERE day = 'Sunday' AND busID =''
+
+
+
+Select count(*) from checkin where busid='' and day='' and hour =''
+
+
+
+------------------------------------------trigger for checkin
+CREATE OR REPLACE FUNCTION calcCheckins() RETURNS trigger AS '
+BEGIN 
+   UPDATE Business
+   SET numCheckins = (SELECT SUM(CheckIn.numCheck) FROM CheckIn WHERE new.busID = checkin.busID)
+   WHERE Business.busid =new.busID;
+   RETURN NULL;
+   
+END
+' LANGUAGE plpgsql; 
+
+CREATE TRIGGER updateNumCheckins
+AFTER INSERT OR UPDATE ON CheckIn
+FOR EACH ROW
+EXECUTE PROCEDURE calcCheckins();
+
+
+--drop TRIGGER updateNumCheckins on checkin
+
+select busid,name,numcheckins from business --where busid='2eJEUJIP54tex7T9YOcLSw'
+--insert into checkin values ('2eJEUJIP54tex7T9YOcLSw','Tuesday','13:30',1)
+--update checkin set numcheck = 3 where busid='2eJEUJIP54tex7T9YOcLSw' and day='Tuesday' and hour='13:30'
